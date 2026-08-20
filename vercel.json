@@ -1,0 +1,13 @@
+{
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/studio", "destination": "/studio.html" },
+    { "source": "/studio/", "destination": "/studio.html" },
+    { "source": "/onboard", "destination": "/onboard.html" },
+    { "source": "/onboard/", "destination": "/onboard.html" },
+    { "source": "/p/wise-owl", "destination": "/p/wise-owl/index.html" },
+    { "source": "/p/wise-owl/", "destination": "/p/wise-owl/index.html" },
+    { "source": "/studio/clients/:id", "destination": "/studio.html" },
+    { "source": "/((?!assets/|__grok/|.*\\..*).*)", "destination": "/index.html" }
+  ]
+}

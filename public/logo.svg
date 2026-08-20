@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 76" fill="none">
+  <g
+    stroke="#1f3fd1"
+    stroke-width="2.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path d="M30 34 40 8l9 18C52 24 62 24 71 31C80 38 82 48 74 57C69 63 59 67 48 67C36 67 26 59 24 46C23 39 25 35 30 34Z"/>
+    <path d="M71 40c6 2 11 6 13 11"/>
+    <path d="M53 39h8"/>
+  </g>
+  <text x="102" y="48" fill="#15256b" font-family="Georgia, 'Times New Roman', serif" font-size="32">Wise Owl</text>
+</svg>
