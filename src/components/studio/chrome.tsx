@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Wordmark } from "@/components/logo";
+import { signOutStudio } from "@/lib/studio-auth";
 import { cn } from "@/lib/utils";
 
 export function StudioChrome({ children }: { children: ReactNode }) {
@@ -24,6 +25,16 @@ export function StudioChrome({ children }: { children: ReactNode }) {
             <Link to="/" className="text-muted transition-colors hover:text-fg">
               Site
             </Link>
+            <button
+              type="button"
+              className="text-muted transition-colors hover:text-fg"
+              onClick={() => {
+                signOutStudio();
+                window.location.assign("/login");
+              }}
+            >
+              Sign out
+            </button>
           </nav>
         </div>
       </header>

@@ -31,7 +31,8 @@ const routes = [
   ["/", "index.html"],
   ["/onboard", "onboard/index.html"],
   ["/onboard", "onboard.html"],
-  ["/studio.html", "studio.html"],
+  ["/login", "login.html"],
+  ["/login", "login/index.html"],
   ["/studio", "studio/index.html"],
   ["/p/wise-owl", "p/wise-owl/index.html"],
 ];

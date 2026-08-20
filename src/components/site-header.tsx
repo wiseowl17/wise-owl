@@ -10,7 +10,7 @@ const nav = [
   { href: "/#approach", label: "Approach" },
   { href: "/#about", label: "About" },
   { href: "/#contact", label: "Contact" },
-  { href: "/studio.html", label: "Studio" },
+  { href: "/login", label: "Studio" },
 ];
 
 export function SiteHeader() {

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoRouteImport } from './routes/logo'
 import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as StudioRouteImport } from './routes/studio'
@@ -22,6 +23,11 @@ import { Route as StudioClientsIdRouteImport } from './routes/studio/clients/$id
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LogoRoute = LogoRouteImport.update({
@@ -67,6 +73,7 @@ const StudioClientsIdRoute = StudioClientsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
   '/studio': typeof StudioRouteWithChildren
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
   '/studio.html': typeof StudioDothtmlRoute
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
   '/studio': typeof StudioRouteWithChildren
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/logo'
     | '/onboard'
     | '/studio'
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/logo'
     | '/onboard'
     | '/studio.html'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/login'
     | '/logo'
     | '/onboard'
     | '/studio'
@@ -135,6 +147,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
   LogoRoute: typeof LogoRoute
   OnboardRoute: typeof OnboardRoute
   StudioRoute: typeof StudioRouteWithChildren
@@ -150,6 +163,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/logo': {
@@ -226,6 +246,7 @@ const StudioRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
   LogoRoute: LogoRoute,
   OnboardRoute: OnboardRoute,
   StudioRoute: StudioRouteWithChildren,

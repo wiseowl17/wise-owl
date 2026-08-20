@@ -17,7 +17,7 @@ export function SiteFooter() {
           <Link to="/onboard" className="text-muted transition-colors hover:text-fg">
             Client onboarding
           </Link>
-          <a href="/studio.html" className="text-muted transition-colors hover:text-fg">
+          <a href="/login" className="text-muted transition-colors hover:text-fg">
             Studio
           </a>
         </nav>

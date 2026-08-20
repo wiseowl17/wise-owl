@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { StudioGate } from "@/components/studio-gate";
 import { StudioChrome } from "@/components/studio/chrome";
 import { StudioHome } from "@/routes/studio/index";
 
@@ -11,8 +12,10 @@ export const Route = createFileRoute("/studio.html")({
 
 function StudioHtmlPage() {
   return (
-    <StudioChrome>
-      <StudioHome />
-    </StudioChrome>
+    <StudioGate>
+      <StudioChrome>
+        <StudioHome />
+      </StudioChrome>
+    </StudioGate>
   );
 }
