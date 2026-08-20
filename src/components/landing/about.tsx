@@ -5,9 +5,9 @@ export function About() {
         <img
           src="/manuel.jpg"
           alt="Manuel Lorenzo Cruz"
-          width={112}
-          height={112}
-          className="size-24 rounded-full object-cover object-top outline outline-1 -outline-offset-1 outline-fg/15 sm:size-28"
+          width={160}
+          height={160}
+          className="size-32 rounded-full object-cover object-top outline outline-1 -outline-offset-1 outline-fg/15 sm:size-40"
         />
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted">

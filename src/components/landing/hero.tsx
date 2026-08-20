@@ -18,9 +18,9 @@ export function Hero() {
           <img
             src="/manuel.jpg"
             alt="Manuel Lorenzo Cruz"
-            width={96}
-            height={96}
-            className="size-16 rounded-full object-cover object-top outline outline-1 -outline-offset-1 outline-fg/15 sm:size-20"
+            width={128}
+            height={128}
+            className="size-24 rounded-full object-cover object-top outline outline-1 -outline-offset-1 outline-fg/15 sm:size-28"
           />
           <div>
             <p className="font-medium leading-tight">Manuel Lorenzo Cruz</p>
