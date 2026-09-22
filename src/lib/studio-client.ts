@@ -1,102 +1,36 @@
+/**
+ * Public form submissions. Each one is saved to the studio database and also
+ * emailed. It only fails if both the database and the email fail.
+ */
 import { deliverForm } from "@/lib/deliver";
-import type { AgreementRow, SignAgreementInput } from "@/lib/agreements";
-import {
-  localAddClient,
-  localAddSale,
-  localAddTodo,
-  localDeleteClient,
-  localDeleteAgreement,
-  localGetClient,
-  localGetStudio,
-  localListAgreements,
-  localSetStatus,
-  localSignAgreement,
-  localSubmitOnboarding,
-  localToggleTodo,
-  localUpdateClient,
-} from "@/lib/studio-local";
-import type {
-  AddClientInput,
-  AddSaleInput,
-  AddTodoInput,
-  OnboardInput,
-  SetStatusInput,
-  UpdateClientInput,
-} from "@/lib/studio";
+import { studioCall } from "@/lib/studio-api";
 
-export const getStudio = async () => localGetStudio();
+type Fields = Record<string, string | undefined>;
 
-export const getClient = async ({ data }: { data: number }) =>
-  localGetClient(data);
-
-export const addClient = async ({ data }: { data: AddClientInput }) =>
-  localAddClient(data);
-
-export const updateClient = async ({ data }: { data: UpdateClientInput }) =>
-  localUpdateClient(data);
-
-export const deleteClient = async ({ data }: { data: number }) =>
-  localDeleteClient(data);
-
-export const addSale = async ({ data }: { data: AddSaleInput }) =>
-  localAddSale({
-    ...data,
-    amountCents: Math.round(Number(data.amountDollars) * 100),
-  });
-
-export const addTodo = async ({ data }: { data: AddTodoInput }) =>
-  localAddTodo(data);
-
-export const toggleTodo = async ({
-  data,
-}: {
-  data: { id: number; clientId: number };
-}) => localToggleTodo(data);
-
-export const setClientStatus = async ({ data }: { data: SetStatusInput }) =>
-  localSetStatus(data);
-
-export const listAgreements = async () => localListAgreements();
-
-export const deleteAgreement = async ({ data }: { data: number }) =>
-  localDeleteAgreement(data);
-
-export async function submitOnboarding({ data }: { data: OnboardInput }) {
-  const result = localSubmitOnboarding(data);
-  await deliverForm({
-    _subject: "Wise Owl — onboarding brief",
-    form: "Onboarding",
-    name: data.name,
-    email: data.email,
-    company: data.company,
-    website: data.website,
-    projectType: data.projectType,
-    goals: data.goals,
-    audience: data.audience,
-    timeline: data.timeline,
-    budget: data.budget,
-    extra: data.extra,
-  });
-  return result;
+async function saveAndEmail(action: string, subject: string, form: string, data: Fields) {
+  const [saved, emailed] = await Promise.allSettled([
+    studioCall(action, data),
+    deliverForm({ _subject: subject, form, ...data }, { mailtoFallback: false }),
+  ]);
+  if (saved.status === "fulfilled") return;
+  const reason = saved.reason as { status?: number; message?: string };
+  // A 4xx is a real validation problem the visitor can fix.
+  if (reason?.status && reason.status >= 400 && reason.status < 500) {
+    throw new Error(reason.message || "Check the form and try again.");
+  }
+  if (emailed.status === "fulfilled" && emailed.value) return;
+  // Last resort: open the visitor's mail app with the details filled in.
+  await deliverForm({ _subject: subject, form, ...data });
 }
 
-export async function signAgreement({ data }: { data: SignAgreementInput }) {
-  const result = localSignAgreement(data);
-  await deliverForm({
-    _subject: "Wise Owl — agreement signed",
-    form: "Agreement",
-    name: data.name,
-    email: data.email,
-    company: data.company,
-    project: data.project,
-    signature: data.signature,
-  });
-  return result;
+export async function submitInquiry({ data }: { data: Fields }) {
+  await saveAndEmail("submitInquiry", "Wise Owl: new inquiry", "Contact", data);
 }
 
-export type { AgreementRow };
-export type {
-  ClientDetail,
-  ClientStatus,
-  StudioOverview,
-} from "@/lib/studio";
+export async function submitOnboarding({ data }: { data: Fields }) {
+  await saveAndEmail("submitOnboarding", "Wise Owl: onboarding brief", "Onboarding", data);
+}
+
+export async function signAgreement({ data }: { data: Fields }) {
+  await saveAndEmail("signAgreement", "Wise Owl: agreement signed", "Agreement", data);
+}

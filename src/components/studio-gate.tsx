@@ -1,22 +1,32 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { isStudioSignedIn } from "@/lib/studio-auth";
+import { getStudioSession } from "@/lib/studio-auth";
 
 export function StudioGate({ children }: { children: ReactNode }) {
-  const [ok, setOk] = useState<boolean | null>(null);
+  const [ok, setOk] = useState(false);
 
   useEffect(() => {
-    const signedIn = isStudioSignedIn();
-    setOk(signedIn);
-    if (signedIn) return;
-    const next = `${window.location.pathname}${window.location.search}`;
-    window.location.replace(`/login?next=${encodeURIComponent(next)}`);
+    let live = true;
+    void getStudioSession().then((email) => {
+      if (!live) return;
+      if (email) {
+        setOk(true);
+        return;
+      }
+      const next = `${window.location.pathname}${window.location.search}`;
+      window.location.replace(`/login?next=${encodeURIComponent(next)}`);
+    });
+    return () => {
+      live = false;
+    };
   }, []);
 
   if (!ok) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-bg">
-        <div className="h-10 w-40 animate-pulse rounded-full bg-raised" />
-        <div className="h-6 w-64 animate-pulse rounded-full bg-raised" />
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <div className="flex flex-col items-center gap-3" aria-label="Loading">
+          <div className="h-8 w-32 animate-pulse rounded-full bg-raised" />
+          <div className="h-4 w-48 animate-pulse rounded-full bg-raised" />
+        </div>
       </div>
     );
   }

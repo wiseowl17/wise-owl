@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  isStudioSignedIn,
+  getStudioSession,
   signInStudio,
   studioNextPath,
 } from "@/lib/studio-auth";
@@ -25,8 +25,9 @@ function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isStudioSignedIn()) return;
-    window.location.replace(studioNextPath(readNext()));
+    void getStudioSession().then((email) => {
+      if (email) window.location.replace(studioNextPath(readNext()));
+    });
   }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -97,6 +98,6 @@ function LoginPage() {
 }
 
 function readNext() {
-  if (typeof window === "undefined") return "/studio.html";
+  if (typeof window === "undefined") return "/studio";
   return new URLSearchParams(window.location.search).get("next");
 }

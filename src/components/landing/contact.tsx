@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { deliverForm } from "@/lib/deliver";
+import { submitInquiry } from "@/lib/studio-client";
 
 const types = [
   "New website",
@@ -24,14 +24,14 @@ export function Contact() {
 
     setPending(true);
     try {
-      await deliverForm({
-        _subject: "Wise Owl — new inquiry",
-        form: "Contact",
+      await submitInquiry({
+        data: {
         name: String(data.get("name") ?? ""),
         email: String(data.get("email") ?? ""),
         company: String(data.get("company") ?? ""),
         projectType: String(data.get("projectType") ?? ""),
         message: String(data.get("message") ?? ""),
+        },
       });
       setSent(true);
       form.reset();

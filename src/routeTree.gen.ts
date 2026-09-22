@@ -16,9 +16,6 @@ import { Route as OnboardRouteImport } from './routes/onboard'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StudioDothtmlRouteImport } from './routes/studio[.]html'
 import { Route as PWiseOwlRouteImport } from './routes/p/wise-owl'
-import { Route as StudioIndexRouteImport } from './routes/studio/index'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as StudioClientsIdRouteImport } from './routes/studio/clients/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -55,44 +52,24 @@ const PWiseOwlRoute = PWiseOwlRouteImport.update({
   path: '/p/wise-owl',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StudioIndexRoute = StudioIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => StudioRoute,
-} as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StudioClientsIdRoute = StudioClientsIdRouteImport.update({
-  id: '/clients/$id',
-  path: '/clients/$id',
-  getParentRoute: () => StudioRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
-  '/studio': typeof StudioRouteWithChildren
+  '/studio': typeof StudioRoute
   '/studio.html': typeof StudioDothtmlRoute
   '/p/wise-owl': typeof PWiseOwlRoute
-  '/studio/': typeof StudioIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/studio/clients/$id': typeof StudioClientsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
+  '/studio': typeof StudioRoute
   '/studio.html': typeof StudioDothtmlRoute
   '/p/wise-owl': typeof PWiseOwlRoute
-  '/studio': typeof StudioIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/studio/clients/$id': typeof StudioClientsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,12 +77,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
-  '/studio': typeof StudioRouteWithChildren
+  '/studio': typeof StudioRoute
   '/studio.html': typeof StudioDothtmlRoute
   '/p/wise-owl': typeof PWiseOwlRoute
-  '/studio/': typeof StudioIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
-  '/studio/clients/$id': typeof StudioClientsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,20 +91,15 @@ export interface FileRouteTypes {
     | '/studio'
     | '/studio.html'
     | '/p/wise-owl'
-    | '/studio/'
-    | '/api/auth/$'
-    | '/studio/clients/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/logo'
     | '/onboard'
+    | '/studio'
     | '/studio.html'
     | '/p/wise-owl'
-    | '/studio'
-    | '/api/auth/$'
-    | '/studio/clients/$id'
   id:
     | '__root__'
     | '/'
@@ -140,9 +109,6 @@ export interface FileRouteTypes {
     | '/studio'
     | '/studio.html'
     | '/p/wise-owl'
-    | '/studio/'
-    | '/api/auth/$'
-    | '/studio/clients/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -150,10 +116,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   LogoRoute: typeof LogoRoute
   OnboardRoute: typeof OnboardRoute
-  StudioRoute: typeof StudioRouteWithChildren
+  StudioRoute: typeof StudioRoute
   StudioDothtmlRoute: typeof StudioDothtmlRoute
   PWiseOwlRoute: typeof PWiseOwlRoute
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -207,52 +172,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PWiseOwlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/studio/': {
-      id: '/studio/'
-      path: '/'
-      fullPath: '/studio/'
-      preLoaderRoute: typeof StudioIndexRouteImport
-      parentRoute: typeof StudioRoute
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/studio/clients/$id': {
-      id: '/studio/clients/$id'
-      path: '/clients/$id'
-      fullPath: '/studio/clients/$id'
-      preLoaderRoute: typeof StudioClientsIdRouteImport
-      parentRoute: typeof StudioRoute
-    }
   }
 }
-
-interface StudioRouteChildren {
-  StudioIndexRoute: typeof StudioIndexRoute
-  StudioClientsIdRoute: typeof StudioClientsIdRoute
-}
-
-const StudioRouteChildren: StudioRouteChildren = {
-  StudioIndexRoute: StudioIndexRoute,
-  StudioClientsIdRoute: StudioClientsIdRoute,
-}
-
-const StudioRouteWithChildren =
-  StudioRoute._addFileChildren(StudioRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   LogoRoute: LogoRoute,
   OnboardRoute: OnboardRoute,
-  StudioRoute: StudioRouteWithChildren,
+  StudioRoute: StudioRoute,
   StudioDothtmlRoute: StudioDothtmlRoute,
   PWiseOwlRoute: PWiseOwlRoute,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

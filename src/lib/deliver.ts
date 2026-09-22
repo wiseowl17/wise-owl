@@ -17,7 +17,11 @@ function asBody(payload: Payload) {
   return body;
 }
 
-export async function deliverForm(payload: Payload) {
+/** Emails the form. Returns true on success; otherwise opens mailto (unless disabled) and returns false. */
+export async function deliverForm(
+  payload: Payload,
+  { mailtoFallback = true }: { mailtoFallback?: boolean } = {},
+) {
   const body = asBody(payload);
   try {
     const response = await fetch(
@@ -36,15 +40,18 @@ export async function deliverForm(payload: Payload) {
       message?: string;
     };
     if (json.success === true || json.success === "true" || response.ok) {
-      return;
+      return true;
     }
   } catch {
     /* fall through to mailto */
   }
+
+  if (!mailtoFallback) return false;
 
   const lines = Object.entries(body)
     .filter(([key]) => !key.startsWith("_"))
     .map(([key, value]) => `${key}: ${value}`);
   const mailto = `mailto:${STUDIO_INBOX}?subject=${encodeURIComponent(body._subject)}&body=${encodeURIComponent(lines.join("\n"))}`;
   window.open(mailto, "_self");
+  return false;
 }

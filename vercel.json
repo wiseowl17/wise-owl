@@ -3,13 +3,20 @@
   "rewrites": [
     { "source": "/login", "destination": "/login.html" },
     { "source": "/login/", "destination": "/login.html" },
-    { "source": "/studio", "destination": "/studio.html" },
-    { "source": "/studio/", "destination": "/studio.html" },
+    { "source": "/studio", "destination": "/studio/index.html" },
+    { "source": "/studio/", "destination": "/studio/index.html" },
+    { "source": "/studio.html", "destination": "/studio/index.html" },
+    { "source": "/studio/:path*", "destination": "/studio/index.html" },
     { "source": "/onboard", "destination": "/onboard.html" },
     { "source": "/onboard/", "destination": "/onboard.html" },
     { "source": "/p/wise-owl", "destination": "/p/wise-owl/index.html" },
     { "source": "/p/wise-owl/", "destination": "/p/wise-owl/index.html" },
-    { "source": "/studio/clients/:id", "destination": "/studio.html" },
-    { "source": "/((?!assets/|__grok/|.*\\..*).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|assets/|__grok/|.*\\..*).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
+    }
   ]
 }

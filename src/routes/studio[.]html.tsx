@@ -1,21 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StudioGate } from "@/components/studio-gate";
-import { StudioChrome } from "@/components/studio/chrome";
-import { StudioHome } from "@/routes/studio/index";
+import { useEffect } from "react";
 
+/** Old bookmark. The Studio lives at /studio now. */
 export const Route = createFileRoute("/studio.html")({
-  component: StudioHtmlPage,
-  head: () => ({
-    meta: [{ title: "Studio — Wise Owl" }],
-  }),
+  component: StudioHtmlRedirect,
+  head: () => ({ meta: [{ name: "robots", content: "noindex, nofollow" }] }),
 });
 
-function StudioHtmlPage() {
-  return (
-    <StudioGate>
-      <StudioChrome>
-        <StudioHome />
-      </StudioChrome>
-    </StudioGate>
-  );
+function StudioHtmlRedirect() {
+  useEffect(() => {
+    window.location.replace(`/studio${window.location.search}`);
+  }, []);
+  return null;
 }
