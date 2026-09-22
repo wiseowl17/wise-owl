@@ -175,10 +175,12 @@ export type Expense = {
 export type Inquiry = {
   id: number;
   name: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
+  best_time: string | null;
   company: string | null;
   project_type: string | null;
-  message: string;
+  message: string | null;
   handled: boolean;
   created_at: string;
 };

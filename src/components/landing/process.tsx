@@ -1,48 +1,44 @@
+import { Band } from "@/components/landing/band";
+
 const steps = [
+  { title: "Call", body: "We talk about your business and what the site needs to do." },
   {
-    num: "01",
     title: "Brief",
-    body: "You talk. I listen. Audience, constraints, and what success actually looks like.",
+    body: "A ten-minute form, so I design from your facts instead of guesses.",
+    link: { href: "/onboard", label: "See the brief" },
   },
-  {
-    num: "02",
-    title: "Direction",
-    body: "A visual and verbal north star before a single page is built. No surprise mid-project.",
-  },
-  {
-    num: "03",
-    title: "Build",
-    body: "Design and production in one pass. Tight pages, real type, nothing leftover.",
-  },
-  {
-    num: "04",
-    title: "Launch",
-    body: "Ship it clean. Hand off what you need. Then I get out of the way.",
-  },
+  { title: "Design", body: "I design and build it. You see it and ask for changes before it goes live." },
+  { title: "Launch", body: "Your domain connected, the site live, and every form tested." },
+  { title: "Care", body: "Optional monthly care for edits, new photos and upkeep." },
 ];
 
+/** How it works: five verbs across one ruled row, read left to right. */
 export function Process() {
   return (
-    <section className="bg-accent text-accent-fg">
-      <div className="mx-auto max-w-6xl px-5 py-16 text-center sm:px-8 sm:py-24">
-        <p className="text-xs font-medium uppercase tracking-[0.22em] text-accent-fg/70">
-          Process
-        </p>
-        <h2 className="mx-auto mt-3 max-w-xl font-display text-4xl tracking-tight sm:text-5xl">
-          Four steps. No theatre.
-        </h2>
-        <div className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step) => (
-            <article key={step.num}>
-              <p className="font-display text-4xl text-accent-fg/45">{step.num}</p>
-              <h3 className="mt-4 text-lg font-medium">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-accent-fg/75">
-                {step.body}
-              </p>
-            </article>
-          ))}
-        </div>
-      </div>
+    <section aria-labelledby="how-title">
+      <Band id="how" headingId="how-title" title="How it works" seeAlso="One person, start to finish" />
+      <ol className="mx-auto grid max-w-7xl grid-cols-1 px-4 py-8 sm:grid-cols-2 sm:px-6 lg:grid-cols-5 lg:px-8 lg:py-12">
+        {steps.map((step, i) => (
+          <li
+            key={step.title}
+            className="flex flex-col gap-2 border-t-2 border-accent py-5 sm:pr-6 lg:border-t-0 lg:border-l-2 lg:py-1 lg:pr-5 lg:pl-5 lg:first:border-l-0 lg:first:pl-0"
+          >
+            <span className="text-[2.6rem] font-black uppercase leading-none tracking-[0.01em] text-accent [font-stretch:75%]">
+              <span className="sr-only">Step {i + 1}: </span>
+              {step.title}
+            </span>
+            <p className="text-[0.95rem] leading-relaxed text-muted">{step.body}</p>
+            {step.link ? (
+              <a
+                href={step.link.href}
+                className="text-sm font-semibold text-accent underline decoration-2 underline-offset-4 hover:decoration-accent/40"
+              >
+                {step.link.label}
+              </a>
+            ) : null}
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }

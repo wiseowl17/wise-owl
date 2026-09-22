@@ -463,11 +463,17 @@ function spam(data: Row) {
 
 async function submitInquiry(data: Row) {
   if (spam(data)) return { ok: true };
+  const phone = opt(data.phone, 40);
+  const mail = str(data.email) ? email(data.email) : null;
+  if (!phone && !mail) fail("Add a phone number or an email so I can reach you.");
+  if (phone && phone.replace(/\D/g, "").length < 7) fail("That phone number looks too short.");
+  const message = opt(data.message, 5000);
+  if (!phone && !message) fail("Message is required.");
   await q(
-    `insert into inquiries (name, email, company, project_type, message)
-     values ($1, $2, $3, $4, $5)`,
-    [need(data.name, "Name", 200), email(data.email), opt(data.company, 200),
-     opt(data.projectType, 100), need(data.message, "Message", 5000)],
+    `insert into inquiries (name, email, phone, best_time, company, project_type, message)
+     values ($1, $2, $3, $4, $5, $6, $7)`,
+    [need(data.name, "Name", 200), mail, phone, opt(data.bestTime, 100), opt(data.company, 200),
+     opt(data.projectType, 100), message],
   );
   return { ok: true };
 }
@@ -634,12 +640,33 @@ const privateActions: Record<string, Handler> = {
   setInquiryHandled: (d) =>
     one("update inquiries set handled = $2 where id = $1 returning *", [id(d.id), Boolean(d.handled)]),
   inquiryToClient: async (d) => {
-    const row = await one<{ id: number; name: string; email: string; company: string | null; message: string }>(
-      "select * from inquiries where id = $1", [id(d.id)],
-    );
+    const row = await one<{
+      id: number; name: string; email: string | null; phone: string | null; best_time: string | null;
+      company: string | null; project_type: string | null; message: string | null;
+    }>("select * from inquiries where id = $1", [id(d.id)]);
     if (!row) fail("That inquiry no longer exists.", 404);
-    const clientId = await upsertClientByEmail(row, "lead", "contact form");
-    await q("insert into notes (client_id, body) values ($1, $2)", [clientId, `From the contact form:\n\n${row.message}`]);
+    const source = row.project_type === "Call request" ? "call request" : "contact form";
+    let clientId: number;
+    if (row.email) {
+      clientId = await upsertClientByEmail({ ...row, email: row.email }, "lead", source);
+      if (row.phone) {
+        await q("update clients set phone = coalesce(phone, $2) where id = $1", [clientId, row.phone]);
+      }
+    } else {
+      const created = await one<{ id: number }>(
+        `insert into clients (name, phone, company, status, source) values ($1, $2, $3, 'lead', $4) returning id`,
+        [row.name, row.phone, row.company, source],
+      );
+      clientId = created!.id;
+    }
+    const lines = [
+      row.best_time ? `Best time to call: ${row.best_time}` : "",
+      row.message ?? "",
+    ].filter(Boolean);
+    await q("insert into notes (client_id, body) values ($1, $2)", [
+      clientId,
+      `From the ${source}:\n\n${lines.join("\n\n") || "(no message)"}`,
+    ]);
     await q("update inquiries set handled = true where id = $1", [row.id]);
     return { clientId };
   },

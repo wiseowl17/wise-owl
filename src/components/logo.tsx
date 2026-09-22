@@ -45,9 +45,9 @@ export function Wordmark({
   markClassName?: string;
 }) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5 text-fg", className)}>
+    <span className={cn("inline-flex items-center gap-2.5 whitespace-nowrap text-fg", className)}>
       <OwlMark className={cn("h-8 w-10 text-accent", markClassName)} />
-      <span className="font-display text-xl leading-none tracking-tight">
+      <span className="font-display text-[1.05rem] font-extrabold uppercase leading-none tracking-[0.04em] [font-stretch:125%]">
         Wise Owl
       </span>
     </span>

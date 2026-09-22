@@ -10,7 +10,7 @@ import type { Inbox, Inquiry } from "@/lib/studio-types";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { key: "inquiries", label: "Contact form" },
+  { key: "inquiries", label: "Calls & messages" },
   { key: "onboardings", label: "Onboarding briefs" },
   { key: "agreements", label: "Signed agreements" },
 ] as const;
@@ -59,7 +59,7 @@ export function InboxView() {
       ) : tab === "inquiries" ? (
         inbox.inquiries.length === 0 ? (
           <Panel>
-            <Empty>No messages from the contact form yet.</Empty>
+            <Empty>No call requests or messages yet.</Empty>
           </Panel>
         ) : (
           <div className="space-y-3">
@@ -167,13 +167,23 @@ function InquiryCard({ inquiry, onChanged }: { inquiry: Inquiry; onChanged: () =
           </p>
           <p className="text-xs text-muted">{formatDate(inquiry.created_at)}</p>
         </div>
-        <p className="text-xs text-muted">
-          <a href={`mailto:${inquiry.email}`} className="hover:text-accent">
-            {inquiry.email}
-          </a>
-          {inquiry.project_type ? ` · ${inquiry.project_type}` : ""}
+        <p className="flex flex-wrap gap-x-3 text-xs text-muted">
+          {inquiry.project_type ? <span className="font-medium text-fg">{inquiry.project_type}</span> : null}
+          {inquiry.phone ? (
+            <a href={`tel:${inquiry.phone}`} className="hover:text-accent">
+              {inquiry.phone}
+            </a>
+          ) : null}
+          {inquiry.email ? (
+            <a href={`mailto:${inquiry.email}`} className="hover:text-accent">
+              {inquiry.email}
+            </a>
+          ) : null}
+          {inquiry.best_time ? <span>Best time: {inquiry.best_time}</span> : null}
         </p>
-        <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm">{inquiry.message}</p>
+        {inquiry.message ? (
+          <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm">{inquiry.message}</p>
+        ) : null}
         <div className="mt-4 flex flex-wrap gap-2">
           <Button size="sm" disabled={busy} onClick={() => void act("inquiryToClient", { id: inquiry.id })}>
             Add as lead
@@ -186,9 +196,16 @@ function InquiryCard({ inquiry, onChanged }: { inquiry: Inquiry; onChanged: () =
           >
             {inquiry.handled ? "Mark as new" : "Mark handled"}
           </Button>
-          <Button size="sm" variant="outline" asChild>
-            <a href={`mailto:${inquiry.email}?subject=${encodeURIComponent("Your website project")}`}>Reply</a>
-          </Button>
+          {inquiry.phone ? (
+            <Button size="sm" variant="outline" asChild>
+              <a href={`tel:${inquiry.phone}`}>Call</a>
+            </Button>
+          ) : null}
+          {inquiry.email ? (
+            <Button size="sm" variant="outline" asChild>
+              <a href={`mailto:${inquiry.email}?subject=${encodeURIComponent("Your website project")}`}>Email</a>
+            </Button>
+          ) : null}
           <ConfirmButton
             size="sm"
             onConfirm={async () => {

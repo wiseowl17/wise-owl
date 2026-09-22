@@ -2,19 +2,20 @@
 @import "tw-animate-css";
 
 @theme {
-  --color-bg: #f3f6fd;
+  --color-bg: #f4f7fe;
   --color-surface: #ffffff;
-  --color-raised: #e6ebfa;
-  --color-fg: #15256b;
-  --color-muted: #4a5c96;
-  --color-subtle: #7a88b4;
+  --color-raised: #e4eafb;
+  --color-tint: #dde5fb;
+  --color-fg: #0f1f5c;
+  --color-muted: #3d4f8f;
+  --color-subtle: #5d6da4;
   --color-accent: #1f3fd1;
   --color-accent-fg: #ffffff;
   --color-royal: #1730a8;
   --color-line: color-mix(in oklab, var(--color-fg) 12%, transparent);
   --color-line-strong: color-mix(in oklab, var(--color-fg) 22%, transparent);
-  --font-display: "Instrument Serif", "Times New Roman", serif;
-  --font-sans: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-sans: "Archivo", "Segoe UI", system-ui, sans-serif;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -56,6 +57,17 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  html {
+    scrollbar-color: color-mix(in oklab, var(--color-accent) 45%, transparent) transparent;
+    accent-color: var(--color-accent);
+    caret-color: var(--color-accent);
   }
 
   ::selection {
@@ -102,4 +114,81 @@
   .rise-4 {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Directory page: one load moment. The category band wipes in left to right,
+ * then the display ad's rules draw. Content is visible by default; motion
+ * only runs when the visitor has not asked for reduced motion.
+ * ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .dir-wipe {
+    animation: dir-wipe 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .dir-draw-x {
+    transform-origin: left center;
+    animation: dir-draw-x 800ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both;
+  }
+  .dir-draw-y {
+    transform-origin: center top;
+    animation: dir-draw-y 800ms cubic-bezier(0.16, 1, 0.3, 1) 250ms both;
+  }
+  .dir-print {
+    animation: dir-print 600ms cubic-bezier(0.16, 1, 0.3, 1) 350ms both;
+  }
+}
+
+@keyframes dir-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes dir-draw-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes dir-draw-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes dir-print {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+/* Dot leaders for directory listings. */
+.dir-leader {
+  flex: 1 1 auto;
+  min-width: 1.5rem;
+  align-self: end;
+  margin-bottom: 0.3em;
+  border-bottom: 2px dotted color-mix(in oklab, var(--color-accent) 45%, transparent);
+}
+
+.dir-leader-light {
+  align-self: center;
+  margin: 0.55em 0 0;
+  border-bottom-color: color-mix(in oklab, var(--color-accent-fg) 55%, transparent);
 }

@@ -128,7 +128,7 @@ function RatesPage() {
           <div className="mt-8 space-y-4 rounded-[24px] border border-line bg-surface p-6 text-sm leading-relaxed text-muted sm:p-8">
             <p className="text-fg">
               This is an agreement between you and Wise Owl, the web design
-              studio of Manuel Lorenzo Cruz.
+              studio of Lorenzo Cruz.
             </p>
             <ol className="list-decimal space-y-3 pl-5">
               <li>

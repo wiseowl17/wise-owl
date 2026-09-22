@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-22T00:00:00Z",
+  "title": "Design System: Wise Owl",
+  "extensions": {
+    "colorMeta": {
+      "accent": { "role": "primary", "displayName": "Royal Directory Blue", "canonical": "#1f3fd1", "tonalRamp": ["#0b1650", "#12227a", "#1730a8", "#1f3fd1", "#4a64e0", "#7a8ee9", "#b0bdf3", "#e3e8fc"] },
+      "royal": { "role": "primary", "displayName": "Pressed Royal", "canonical": "#1730a8", "tonalRamp": ["#08123f", "#0e1c66", "#1730a8", "#2a45c4", "#5169d6", "#8093e3", "#b4c0f0", "#e4e9fb"] },
+      "accent-fg": { "role": "neutral", "displayName": "Reversed White", "canonical": "#ffffff", "tonalRamp": ["#1e2233", "#3a3f55", "#5a607a", "#80869f", "#a8adc2", "#cfd3e2", "#eceef5", "#ffffff"] },
+      "bg": { "role": "neutral", "displayName": "Ice White", "canonical": "#f4f7fe", "tonalRamp": ["#1d2436", "#394358", "#5a6680", "#8490aa", "#aeb8d0", "#d3daec", "#e8edfa", "#f4f7fe"] },
+      "surface": { "role": "neutral", "displayName": "Coupon White", "canonical": "#ffffff", "tonalRamp": ["#1e2233", "#3a3f55", "#5a607a", "#80869f", "#a8adc2", "#cfd3e2", "#eceef5", "#ffffff"] },
+      "fg": { "role": "neutral", "displayName": "Double-Pass Navy", "canonical": "#0f1f5c", "tonalRamp": ["#070f2e", "#0f1f5c", "#1c2f75", "#2e418a", "#4c5d9f", "#7483b8", "#a9b3d4", "#e0e4f1"] },
+      "muted": { "role": "neutral", "displayName": "Directory Navy", "canonical": "#3d4f8f", "tonalRamp": ["#121a38", "#1f2c5c", "#2e3d77", "#3d4f8f", "#5d6da4", "#8390bb", "#b3bcd8", "#e2e6f2"] },
+      "subtle": { "role": "neutral", "displayName": "Faded Navy", "canonical": "#5d6da4", "tonalRamp": ["#151d3c", "#243162", "#3d4f8f", "#5d6da4", "#7885b5", "#98a3c8", "#c1c8e0", "#e6e9f4"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (expanded black)", "purpose": "The display ad's promise; 1.85rem, 2.6rem at sm, 3.05rem at lg; max 18ch; one per page." },
+      "headline": { "displayName": "Category Band (condensed black caps)", "purpose": "Band titles in reversed white; 1.65rem, 2rem at sm." },
+      "title": { "displayName": "Ad Name (expanded black caps)", "purpose": "Names in display ads and listings; 2.4rem feature, 1.45-1.65rem smaller ads." },
+      "body": { "displayName": "Body", "purpose": "Reading text in muted navy, 0.95-1.125rem, 40-52ch measure." },
+      "agate": { "displayName": "Agate", "purpose": "Trade/place lines, listing details, see-also lines; wdth 87.5." },
+      "label": { "displayName": "Label (condensed caps)", "purpose": "Field labels, definition terms, agate column heading; in accent." },
+      "action": { "displayName": "Action", "purpose": "Nav links, Visit, button labels; uppercase, wdth 87.5." }
+    },
+    "rules": [
+      { "name": "outer-frame", "value": "3px solid var(--color-accent)", "purpose": "Display ad double-rule outer frame; coupon uses 3px dashed." },
+      { "name": "structure", "value": "2px solid var(--color-accent)", "purpose": "Ad boxes, band-adjacent dividers, header and footer rules, listing groups." },
+      { "name": "hairline", "value": "1px solid color-mix(in oklab, var(--color-accent) 20%-60%, transparent)", "purpose": "Inner ad frame (60%), screenshot frame (40%), list dividers (20%)." },
+      { "name": "leader", "value": "2px dotted color-mix(in oklab, var(--color-accent) 45%, transparent)", "purpose": "Dot leader between a listing's name and detail; 55% white on blue." }
+    ],
+    "shadows": [
+      { "name": "field-focus-rule", "value": "0 2px 0 0 var(--color-accent)", "purpose": "Not elevation: thickens a focused field's 2px underline to 4px. The only box-shadow in the directory world." }
+    ],
+    "motion": [
+      { "name": "ease-directory", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Load-moment easing for wipe, draw and print." },
+      { "name": "dir-wipe", "value": "clip-path inset(0 100% 0 0) to inset(0) 700ms", "purpose": "First category band wipes in left to right." },
+      { "name": "dir-draw", "value": "scaleX/scaleY 0 to 1, 800ms, 250ms delay", "purpose": "Display ad rules draw." },
+      { "name": "dir-print", "value": "opacity 0, translateY(6px), blur(3px) to rest, 600ms, 350ms delay", "purpose": "Inner hairline and the printed call request." },
+      { "name": "hover-state", "value": "150ms background-color/transform; 200-300ms ease-out lifts", "purpose": "Button darken, press scale 0.97-0.98, screenshot lift 4-8px." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Call Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The Book a call slab: square accent fill, reversed white condensed caps, darkens to royal.",
+      "html": "<button class=\"ds-btn-call\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.25\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z\"/></svg>Book a call</button>",
+      "css": ".ds-btn-call { display: inline-flex; align-items: center; gap: 12px; height: 56px; padding: 0 32px; border: 0; border-radius: 0; background: var(--color-accent, #1f3fd1); color: var(--color-accent-fg, #fff); font-family: Archivo, system-ui, sans-serif; font-size: 1.125rem; font-weight: 800; font-stretch: 87.5%; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; transition: background-color 150ms, transform 150ms; } .ds-btn-call:hover { background: var(--color-royal, #1730a8); } .ds-btn-call:active { transform: scale(0.98); } .ds-btn-call:focus-visible { outline: 2px solid var(--color-accent, #1f3fd1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Category Band",
+      "kind": "custom",
+      "refersTo": "category-band",
+      "description": "Full-width accent strip that opens every section: condensed black caps title plus a see-also line.",
+      "html": "<div class=\"ds-band\"><p class=\"ds-band-title\">Web design</p><p class=\"ds-band-see\">See also: Landing pages, Redesigns, Website care</p></div>",
+      "css": ".ds-band { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 24px; padding: 12px 32px; background: var(--color-accent, #1f3fd1); color: var(--color-accent-fg, #fff); font-family: Archivo, system-ui, sans-serif; } .ds-band-title { margin: 0; font-size: 2rem; font-weight: 900; font-stretch: 75%; line-height: 1; letter-spacing: 0.02em; text-transform: uppercase; } .ds-band-see { margin: 0; font-size: 0.8rem; font-weight: 500; font-stretch: 87.5%; letter-spacing: 0.02em; opacity: 0.85; }"
+    },
+    {
+      "name": "Client Display Ad",
+      "kind": "card",
+      "refersTo": "display-ad",
+      "description": "2px ruled square box: expanded name, agate trade line, 16:10 screenshot, description, and a Visit listing line with a dot leader.",
+      "html": "<article class=\"ds-ad\"><h3 class=\"ds-ad-name\">Barkly's</h3><p class=\"ds-ad-trade\">Pet grooming, boarding &amp; daycare, Charlotte area</p><div class=\"ds-ad-shot\"></div><p class=\"ds-ad-body\">Online booking, services with a price table, a gallery and policies.</p><a class=\"ds-ad-visit\" href=\"#\"><span class=\"ds-ad-visit-label\">Visit</span><span class=\"ds-leader\"></span><span class=\"ds-ad-host\">barklysclt.com</span><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a></article>",
+      "css": ".ds-ad { display: flex; flex-direction: column; gap: 16px; max-width: 420px; padding: 20px; border: 2px solid var(--color-accent, #1f3fd1); background: var(--color-bg, #f4f7fe); font-family: Archivo, system-ui, sans-serif; } .ds-ad-name { margin: 0; font-size: 1.65rem; font-weight: 900; font-stretch: 125%; line-height: 0.95; letter-spacing: 0.01em; text-transform: uppercase; color: var(--color-fg, #0f1f5c); } .ds-ad-trade { margin: -10px 0 0; font-size: 0.875rem; font-stretch: 87.5%; color: var(--color-muted, #3d4f8f); } .ds-ad-shot { aspect-ratio: 16 / 10; border: 1px solid color-mix(in oklab, var(--color-accent, #1f3fd1) 40%, transparent); background: var(--color-surface, #fff); transition: transform 300ms ease-out; } .ds-ad:hover .ds-ad-shot { transform: translateY(-4px); } .ds-ad-body { margin: 0; font-size: 0.95rem; line-height: 1.625; color: var(--color-muted, #3d4f8f); } .ds-ad-visit { display: flex; align-items: center; gap: 8px; min-height: 44px; padding-top: 8px; border-top: 2px solid var(--color-accent, #1f3fd1); color: var(--color-accent, #1f3fd1); text-decoration: none; } .ds-ad-visit-label { font-size: 0.875rem; font-weight: 700; font-stretch: 87.5%; letter-spacing: 0.06em; text-transform: uppercase; } .ds-leader { flex: 1 1 auto; min-width: 1.5rem; align-self: end; margin-bottom: 0.3em; border-bottom: 2px dotted color-mix(in oklab, var(--color-accent, #1f3fd1) 45%, transparent); } .ds-ad-host { font-weight: 900; font-stretch: 112.5%; } .ds-ad-visit:hover .ds-ad-host { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; } .ds-ad-visit:focus-visible { outline: 2px solid var(--color-accent, #1f3fd1); outline-offset: 2px; }"
+    },
+    {
+      "name": "Listing Row",
+      "kind": "custom",
+      "refersTo": "listing-row",
+      "description": "Name, dot leader, detail: the directory's core line, used for services, facts and the printed call request.",
+      "html": "<ul class=\"ds-listing\"><li><span class=\"ds-listing-name\">Landing page</span><span class=\"ds-leader\"></span><span class=\"ds-listing-detail\">one focused page</span></li><li><span class=\"ds-listing-name\">Small business site</span><span class=\"ds-leader\"></span><span class=\"ds-listing-detail\">3 to 5 pages</span></li></ul>",
+      "css": ".ds-listing { list-style: none; margin: 0; padding: 0; max-width: 360px; border-top: 1px solid color-mix(in oklab, var(--color-accent, #1f3fd1) 20%, transparent); border-bottom: 1px solid color-mix(in oklab, var(--color-accent, #1f3fd1) 20%, transparent); font-family: Archivo, system-ui, sans-serif; font-size: 0.95rem; } .ds-listing li { display: flex; align-items: baseline; gap: 8px; padding: 12px 0; } .ds-listing li + li { border-top: 1px solid color-mix(in oklab, var(--color-accent, #1f3fd1) 20%, transparent); } .ds-listing-name { font-weight: 700; color: var(--color-fg, #0f1f5c); } .ds-listing-detail { font-stretch: 87.5%; color: var(--color-muted, #3d4f8f); } .ds-leader { flex: 1 1 auto; min-width: 1.5rem; align-self: end; margin-bottom: 0.3em; border-bottom: 2px dotted color-mix(in oklab, var(--color-accent, #1f3fd1) 45%, transparent); }"
+    },
+    {
+      "name": "Coupon Field",
+      "kind": "input",
+      "refersTo": "input-underline",
+      "description": "Fill-in underline inside the dashed coupon; the rule thickens on focus.",
+      "html": "<div class=\"ds-coupon\"><div class=\"ds-coupon-slip\"><label class=\"ds-label\" for=\"ds-phone\">Phone</label><input id=\"ds-phone\" class=\"ds-field\" type=\"tel\" /></div></div>",
+      "css": ".ds-coupon { max-width: 420px; padding: 6px; border: 3px dashed var(--color-accent, #1f3fd1); } .ds-coupon-slip { display: flex; flex-direction: column; gap: 6px; padding: 20px; background: var(--color-surface, #fff); font-family: Archivo, system-ui, sans-serif; } .ds-label { font-size: 0.75rem; font-weight: 900; font-stretch: 75%; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent, #1f3fd1); } .ds-field { height: 44px; padding: 0 2px; border: 0; border-bottom: 2px solid color-mix(in oklab, var(--color-accent, #1f3fd1) 75%, transparent); border-radius: 0; background: transparent; color: var(--color-fg, #0f1f5c); font: inherit; font-size: 1.125rem; font-variant-numeric: tabular-nums; outline: none; transition: border-color 150ms, box-shadow 150ms; } .ds-field:hover { border-bottom-color: var(--color-accent, #1f3fd1); } .ds-field:focus-visible { border-bottom-color: var(--color-accent, #1f3fd1); box-shadow: 0 2px 0 0 var(--color-accent, #1f3fd1); }"
+    },
+    {
+      "name": "Running Head Nav",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Sticky header on ice-white, 2px rule under: wordmark, condensed caps links, header call button.",
+      "html": "<header class=\"ds-head\"><span class=\"ds-wordmark\">Wise Owl</span><nav class=\"ds-nav\"><a href=\"#\">Work</a><a href=\"#\">How it works</a><a href=\"#\">About</a><a class=\"ds-nav-call\" href=\"#\">Book a call</a></nav></header>",
+      "css": ".ds-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; padding: 0 32px; border-bottom: 2px solid var(--color-accent, #1f3fd1); background: var(--color-bg, #f4f7fe); font-family: Archivo, system-ui, sans-serif; } .ds-wordmark { font-size: 1.05rem; font-weight: 800; font-stretch: 125%; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-fg, #0f1f5c); } .ds-nav { display: flex; align-items: center; gap: 32px; } .ds-nav a { font-size: 0.8rem; font-weight: 600; font-stretch: 87.5%; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-muted, #3d4f8f); text-decoration: none; transition: color 150ms; } .ds-nav a:hover { color: var(--color-accent, #1f3fd1); } .ds-nav a:focus-visible { outline: 2px solid var(--color-accent, #1f3fd1); outline-offset: 2px; } .ds-nav a.ds-nav-call { display: inline-flex; align-items: center; height: 40px; padding: 0 16px; background: var(--color-accent, #1f3fd1); color: var(--color-accent-fg, #fff); font-size: 0.875rem; font-weight: 700; letter-spacing: 0.06em; transition: background-color 150ms, transform 150ms; } .ds-nav a.ds-nav-call:hover { background: var(--color-royal, #1730a8); color: var(--color-accent-fg, #fff); } .ds-nav a.ds-nav-call:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Text Link",
+      "kind": "custom",
+      "refersTo": "text-link",
+      "description": "Accent link with a 2px underline that fades to 40% on hover.",
+      "html": "<a class=\"ds-link\" href=\"#\">Start your project brief</a>",
+      "css": ".ds-link { font-family: Archivo, system-ui, sans-serif; font-size: 0.875rem; font-weight: 600; color: var(--color-accent, #1f3fd1); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; transition: text-decoration-color 150ms; } .ds-link:hover { text-decoration-color: color-mix(in oklab, var(--color-accent, #1f3fd1) 40%, transparent); } .ds-link:focus-visible { outline: 2px solid var(--color-accent, #1f3fd1); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Local Directory",
+    "overview": "The public site is printed like a page from a local business directory. Two inks carry everything: royal blue on ice-white, with deep navy (a double pass of the blue) for reading text. Structure comes from rules instead of surfaces: full-width reversed category bands open every section, square ruled boxes hold the display ads, dotted leaders tie a name to its detail, and a dashed coupon holds the call request. The only curve in the world is the portrait circle.\n\nArchivo's width axis sets the voice. Expanded black (wdth 125) is for names and promises, like the display ads. Condensed black (wdth 75) is for category bands, step verbs and field labels. Slightly condensed (wdth 87.5) is for action labels and the agate detail lines. Body text sits at normal width. The page is dense the way a directory is dense, with tight bands and listings, but body text keeps generous leading and a short measure.\n\nMotion is a single load moment. The first category band wipes in from left to right, then the display ad's double rule draws, and its inner hairline prints. After that, hover feedback is short and mechanical. Reduced motion shows everything at rest. There are no drop shadows, gradients or paper texture, and the site is never dark.",
+    "keyCharacteristics": [
+      "Two inks: royal blue and navy on ice-white.",
+      "Every section opens with a full-width reversed blue band in condensed white caps, plus an optional \"see also\" line.",
+      "Square ruled boxes: a 3px outer rule, 2px structural rules and 1px hairlines.",
+      "Dotted leaders join each listing to its detail.",
+      "The width axis carries hierarchy: expanded for names, condensed for bands and labels.",
+      "One load moment (wipe, draw, print); otherwise static."
+    ],
+    "rules": [
+      { "name": "The Two Inks Rule", "body": "Blue and navy on ice-white only. A new color is a new ink, and the directory does not print one.", "section": "colors" },
+      { "name": "The Pressed Ink Rule", "body": "Hover darkens blue to royal. It never lightens, glows or changes hue.", "section": "colors" },
+      { "name": "The Width Is Voice Rule", "body": "Expanded is for names and promises, and condensed is for bands, labels and verbs. Change width before you reach for a new size or weight.", "section": "typography" },
+      { "name": "The Tabular Number Rule", "body": "Phone numbers use tabular figures, both in the field and in the printed listing.", "section": "typography" },
+      { "name": "The Band Opens Every Section Rule", "body": "A new section starts with a category band that has a title and an optional \"see also\" line. Sections have no other kind of header.", "section": "layout" },
+      { "name": "The Ink Not Shadow Rule", "body": "No drop shadows, glows or gradients. The one box-shadow in the system is a flat 2px blue line under a focused field. It works as a thicker rule and never as a lift.", "section": "elevation" },
+      { "name": "The Square Corner Rule", "body": "On directory surfaces the radius is 0. Only the portrait is round.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do open every public section with a category band: a condensed black uppercase title on accent, plus a \"see also\" line.",
+      "Do build containers from rules at three weights (3px frame, 2px structure, 1px hairline) with square corners.",
+      "Do join names to details with dotted leaders, and set phone numbers in tabular figures.",
+      "Do use Archivo's width axis for hierarchy: wdth 125 for names and promises, 75 for bands, verbs and labels, 87.5 for actions and agate.",
+      "Do show client screenshots whole at 16:10, top-aligned, in a 1px hairline frame.",
+      "Do keep the portrait a modest circle with a 2px offset blue outline.",
+      "Do darken filled actions to royal on hover. Keep hover transitions at 150–300ms and limit load motion to the wipe, draw and print sequence."
+    ],
+    "donts": [
+      "Don't add drop shadows, glows, gradients or paper texture. Depth is ink weight.",
+      "Don't round boxes, buttons, fields or screenshots on directory surfaces. The Studio's rounded panels stay in the Studio.",
+      "Don't introduce a third ink or a dark theme.",
+      "Don't show the headshot full-bleed or as anything other than a small circle.",
+      "Don't replace the fill-in underline fields with boxed inputs on the public site."
+    ]
+  }
+}

@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { About } from "@/components/landing/about";
-import { Approach } from "@/components/landing/approach";
-import { Contact } from "@/components/landing/contact";
+import { BookCall } from "@/components/landing/book-call";
 import { Hero } from "@/components/landing/hero";
 import { Process } from "@/components/landing/process";
-import { Services } from "@/components/landing/services";
+import { Work } from "@/components/landing/work";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
@@ -16,11 +15,10 @@ function Home() {
       <SiteHeader />
       <main>
         <Hero />
-        <Services />
-        <Approach />
+        <Work />
         <Process />
         <About />
-        <Contact />
+        <BookCall />
       </main>
       <SiteFooter />
     </div>

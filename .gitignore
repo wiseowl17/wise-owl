@@ -15,3 +15,11 @@ startup.sh
 .grok
 .project_id
 .node_modules.lock
+
+# Impeccable working files (keep briefs, DESIGN sidecar)
+.impeccable/shots
+.impeccable/review
+.impeccable/questions
+.impeccable/direction-round.json
+.impeccable/brief-body.md
+.tanstack

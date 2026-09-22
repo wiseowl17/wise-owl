@@ -8,18 +8,17 @@ import { Toaster } from "sonner";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Wise Owl";
 
 export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: APP_NAME },
+      { title: "Wise Owl · Web design for local businesses" },
       {
         name: "description",
         content:
-          "Wise Owl is the web design studio of Manuel Lorenzo Cruz. Custom websites, redesigns, and landing pages.",
+          "Custom websites for local businesses, designed and built by Lorenzo Cruz. Booking, payments and calendar sync built in.",
       },
       { name: "theme-color", content: "#1f3fd1" },
     ],
@@ -33,7 +32,7 @@ export const Route = createRootRoute({
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },

@@ -1,6 +1,6 @@
 # Wise Owl
 
-Web design studio of Manuel Lorenzo Cruz.
+Web design studio of Lorenzo Cruz.
 
 - Public site: landing page, contact, onboarding (`/onboard`)
 - Hidden rates + agreement: `/p/wise-owl`
