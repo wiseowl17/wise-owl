@@ -1,0 +1,73 @@
+name: Production smoke
+
+# After Vercel marks a production deploy successful, hit the live URL.
+# The build-time check in scripts/smoke-preview.mjs is what blocks a bad
+# deploy from shipping. This is the second net: if production is actually
+# down, roll it back when VERCEL_TOKEN is set on the repo.
+on:
+  deployment_status:
+
+jobs:
+  smoke:
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request the live site
+        id: check
+        env:
+          TARGET: ${{ github.event.deployment_status.environment_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TARGET}" ]; then
+            echo "No environment URL on the deployment."
+            exit 1
+          fi
+          echo "Checking ${TARGET}"
+          code="000"
+          body=""
+          for _ in 1 2 3 4 5 6; do
+            code=$(curl -sS -m 25 -o /tmp/smoke-body.txt -w "%{http_code}" "${TARGET}/" || echo "000")
+            body=$(head -c 400 /tmp/smoke-body.txt || true)
+            echo "status ${code}"
+            if [ "${code}" -ge 200 ] && [ "${code}" -lt 500 ]; then
+              case "${body}" in
+                *ssr_exports*|*'"unhandled": true'*|*'"unhandled":true'*) ;;
+                *) echo "ok"; exit 0 ;;
+              esac
+            fi
+            sleep 5
+          done
+          echo "Production is down (${code})"
+          echo "${body}"
+          exit 1
+
+      - name: Roll back production
+        if: failure()
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_yxCIIRuuKhS1gHrLy9AHm0Tc
+          VERCEL_PROJECT_ID: prj_fp5iJfpWlpf2h1UxFwMoLyJKPtH1
+        run: |
+          set -euo pipefail
+          if [ -z "${VERCEL_TOKEN}" ]; then
+            echo "Live check failed. Add the VERCEL_TOKEN secret to roll back automatically."
+            exit 1
+          fi
+          prev=$(curl -fsS \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+            "https://api.vercel.com/v6/deployments?projectId=${VERCEL_PROJECT_ID}&target=production&limit=5&teamId=${VERCEL_ORG_ID}" \
+            | node -e '
+              let raw=""; process.stdin.on("data", c => raw += c); process.stdin.on("end", () => {
+                const list = JSON.parse(raw).deployments || [];
+                const ready = list.filter(d => d.readyState === "READY" || d.state === "READY");
+                const target = ready[1];
+                if (!target) process.exit(2);
+                process.stdout.write(target.uid || target.id);
+              });
+            ')
+          echo "Rolling back to ${prev}"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${VERCEL_TOKEN}" \
+            "https://api.vercel.com/v1/projects/${VERCEL_PROJECT_ID}/rollback/${prev}?teamId=${VERCEL_ORG_ID}&description=Automatic%20rollback%3A%20production%20smoke%20check%20failed."
