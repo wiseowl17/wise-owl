@@ -311,7 +311,332 @@ const PAYMENT_SELECT = `
   join clients c on c.id = pay.client_id
   left join projects p on p.id = pay.project_id`;
 
+/* ------------------------------------------------------------- invoices */
+
+const INVOICE_SELECT = `
+  select i.*, c.name as client_name, c.company as client_company, c.email as client_email,
+    c.address as client_address, c.website as client_website, p.name as project_name,
+    coalesce(it.total_cents, 0) as total_cents,
+    coalesce(pay.paid_cents, 0) as paid_cents,
+    greatest(coalesce(it.total_cents, 0) - coalesce(pay.paid_cents, 0), 0) as balance_cents,
+    case
+      when i.status = 'void' then 'void'
+      when coalesce(it.total_cents, 0) > 0 and coalesce(pay.paid_cents, 0) >= coalesce(it.total_cents, 0) then 'paid'
+      when i.status = 'draft' then 'draft'
+      when i.due_on is not null and i.due_on < ${TODAY_SQL} then 'overdue'
+      when coalesce(pay.paid_cents, 0) > 0 then 'partial'
+      else 'sent'
+    end as state
+  from invoices i
+  join clients c on c.id = i.client_id
+  left join projects p on p.id = i.project_id
+  left join (
+    select invoice_id, sum(round(quantity * unit_cents))::bigint as total_cents
+    from invoice_items group by invoice_id
+  ) it on it.invoice_id = i.id
+  left join (
+    select invoice_id, sum(amount_cents) as paid_cents
+    from payments where status = 'paid' and invoice_id is not null group by invoice_id
+  ) pay on pay.invoice_id = i.id`;
+
+type InvoiceRow = {
+  id: number;
+  number: string;
+  client_id: number;
+  project_id: number | null;
+  care_plan_id: number | null;
+  status: string;
+  state: string;
+  public_token: string;
+  stripe_session_id: string | null;
+  total_cents: number;
+  paid_cents: number;
+  balance_cents: number;
+  client_email: string | null;
+};
+
+type ItemInput = { description: string; details: string | null; quantity: number; unit_cents: number };
+
+function invoiceItems(value: unknown): ItemInput[] {
+  const rows = Array.isArray(value) ? value : [];
+  const items = rows
+    .map((raw) => {
+      const r = (raw ?? {}) as Row;
+      const quantity = Number(r.quantity ?? 1);
+      if (!Number.isFinite(quantity) || quantity <= 0) fail("Quantity must be more than 0.");
+      return {
+        description: str(r.description, 300),
+        details: opt(r.details, 2000),
+        quantity: Math.round(quantity * 100) / 100,
+        unit_cents: cents(r.unitPrice ?? 0, "Price", true),
+      };
+    })
+    .filter((r) => r.description !== "");
+  if (!items.length) fail("Add at least one line item.");
+  const total = items.reduce((sum, r) => sum + Math.round(r.quantity * r.unit_cents), 0);
+  if (total < 0) fail("The invoice total can't be negative.");
+  return items;
+}
+
+function newToken() {
+  return createHash("sha256").update(`${Date.now()}:${Math.random()}:${process.hrtime.bigint()}`)
+    .digest("base64url").slice(0, 32);
+}
+
+function addDays(iso: string, days: number) {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+async function todayIso() {
+  return (await one<{ d: string }>(`select ${TODAY_SQL}::text as d`))!.d;
+}
+
+async function insertInvoice(
+  db: pg.PoolClient,
+  fields: { client_id: number; project_id: number | null; care_plan_id?: number | null; period?: string | null;
+    issued_on: string; due_on: string | null; notes: string | null; status?: string },
+  items: ItemInput[],
+) {
+  const res = await db.query(
+    `insert into invoices (number, client_id, project_id, care_plan_id, period, status, issued_on, due_on, notes, public_token)
+     values ('WO-' || lpad(nextval('invoice_number_seq')::text, 4, '0'), $1, $2, $3, $4, $5, $6, $7, $8, $9)
+     on conflict (care_plan_id, period) do nothing
+     returning id`,
+    [fields.client_id, fields.project_id, fields.care_plan_id ?? null, fields.period ?? null,
+     fields.status ?? "draft", fields.issued_on, fields.due_on, fields.notes, newToken()],
+  );
+  const invoiceId = res.rows[0]?.id as number | undefined;
+  if (!invoiceId) return null;
+  await writeItems(db, invoiceId, items);
+  return Number(invoiceId);
+}
+
+async function writeItems(db: pg.PoolClient, invoiceId: number, items: ItemInput[]) {
+  await db.query("delete from invoice_items where invoice_id = $1", [invoiceId]);
+  for (const [position, item] of items.entries()) {
+    await db.query(
+      `insert into invoice_items (invoice_id, position, description, details, quantity, unit_cents)
+       values ($1, $2, $3, $4, $5, $6)`,
+      [invoiceId, position, item.description, item.details, item.quantity, item.unit_cents],
+    );
+  }
+}
+
+async function inTransaction<T>(work: (db: pg.PoolClient) => Promise<T>) {
+  const db = await pool().connect();
+  try {
+    await db.query("begin");
+    const result = await work(db);
+    await db.query("commit");
+    return result;
+  } catch (err) {
+    await db.query("rollback");
+    throw err;
+  } finally {
+    db.release();
+  }
+}
+
+/**
+ * Monthly care auto-invoices. For every running care plan whose billing day
+ * has arrived this month, create one draft invoice for the month (never two).
+ * Runs whenever the Studio loads invoices or the overview.
+ */
+async function ensureCareInvoices() {
+  const due = await q<{ id: number; client_id: number; plan: string; amount_cents: number; billing_date: string; month_label: string; period: string }>(`
+    select cp.id, cp.client_id, cp.plan, cp.amount_cents,
+      bd.billing_date::text as billing_date,
+      to_char(${TODAY_SQL}, 'FMMonth YYYY') as month_label,
+      ${MONTH_SQL} as period
+    from care_plans cp
+    cross join lateral (
+      select make_date(extract(year from ${TODAY_SQL})::int, extract(month from ${TODAY_SQL})::int,
+        least(cp.billing_day, extract(day from (date_trunc('month', ${TODAY_SQL}) + interval '1 month - 1 day'))::int)) as billing_date
+    ) bd
+    where (cp.ended_on is null or cp.ended_on > ${TODAY_SQL})
+      and bd.billing_date <= ${TODAY_SQL}
+      and bd.billing_date >= cp.started_on
+      and not exists (
+        select 1 from invoices i where i.care_plan_id = cp.id and i.period = ${MONTH_SQL}
+      )`);
+  const names: Record<string, string> = { basic: "Basic care", backend: "Backend care", custom: "Custom care" };
+  let created = 0;
+  for (const plan of due) {
+    const id = await inTransaction((db) =>
+      insertInvoice(db, {
+        client_id: plan.client_id,
+        project_id: null,
+        care_plan_id: plan.id,
+        period: plan.period,
+        issued_on: plan.billing_date,
+        due_on: addDays(plan.billing_date, 7),
+        notes: null,
+      }, [{
+        description: `Monthly care, ${plan.month_label}`,
+        details: names[plan.plan] ?? "Monthly care",
+        quantity: 1,
+        unit_cents: plan.amount_cents,
+      }]),
+    );
+    if (id) created += 1;
+  }
+  return created;
+}
+
+async function getInvoice(invoiceId: number) {
+  let invoice = await one<InvoiceRow>(`${INVOICE_SELECT} where i.id = $1`, [invoiceId]);
+  if (!invoice) fail("That invoice no longer exists.", 404);
+  // A client may have paid by card and closed the tab before returning.
+  if (invoice.stripe_session_id && invoice.balance_cents > 0) {
+    if (await syncStripeSession(invoice, invoice.stripe_session_id)) {
+      invoice = (await one<InvoiceRow>(`${INVOICE_SELECT} where i.id = $1`, [invoiceId]))!;
+    }
+  }
+  const [items, payments] = await Promise.all([
+    q("select * from invoice_items where invoice_id = $1 order by position, id", [invoiceId]),
+    q(`${PAYMENT_SELECT} where pay.invoice_id = $1 order by pay.paid_on, pay.id`, [invoiceId]),
+  ]);
+  return { invoice, items, payments };
+}
+
+function paymentKindFor(invoice: { care_plan_id: number | null; project_id: number | null }) {
+  if (invoice.care_plan_id) return "care";
+  if (invoice.project_id) return "project";
+  return "other";
+}
+
+/* --------------------------------------------------------------- stripe */
+
+function stripeKey() {
+  return process.env["STRIPE_SECRET_KEY"]?.trim() || null;
+}
+
+async function stripe<T>(method: "GET" | "POST", path: string, form?: Record<string, string>) {
+  const key = stripeKey();
+  if (!key) fail("Card payments aren't set up yet.", 503);
+  const response = await fetch(`https://api.stripe.com/v1/${path}`, {
+    method,
+    headers: {
+      authorization: `Bearer ${key}`,
+      ...(form ? { "content-type": "application/x-www-form-urlencoded" } : {}),
+    },
+    body: form ? new URLSearchParams(form).toString() : undefined,
+  });
+  const body = (await response.json()) as T & { error?: { message?: string } };
+  if (!response.ok) {
+    console.error("[stripe]", path, body.error?.message);
+    fail("The card payment page couldn't be opened. Try again, or pay another way.", 502);
+  }
+  return body;
+}
+
+type StripeSession = {
+  id: string;
+  url: string | null;
+  payment_status: string;
+  amount_total: number | null;
+  metadata: Record<string, string> | null;
+};
+
+/** Records a paid Checkout session against its invoice, once. Returns true if newly recorded. */
+async function syncStripeSession(invoice: InvoiceRow, sessionId: string) {
+  if (!stripeKey() || !/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return false;
+  const session = await stripe<StripeSession>("GET", `checkout/sessions/${encodeURIComponent(sessionId)}`);
+  if (session.metadata?.invoice_id !== String(invoice.id)) return false;
+  if (session.payment_status !== "paid" || !session.amount_total) return false;
+  const res = await pool().query(
+    `insert into payments (client_id, project_id, invoice_id, amount_cents, kind, method, status, paid_on, notes, stripe_ref)
+     values ($1, $2, $3, $4, $5, 'card', 'paid', ${TODAY_SQL}, $6, $7)
+     on conflict (stripe_ref) do nothing`,
+    [invoice.client_id, invoice.project_id, invoice.id, session.amount_total,
+     paymentKindFor(invoice), `Paid by card through Stripe (invoice ${invoice.number})`, session.id],
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+function requestOrigin(request: Request) {
+  const url = new URL(request.url);
+  const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || url.host;
+  const proto = request.headers.get("x-forwarded-proto") || url.protocol.replace(":", "");
+  return `${proto}://${host}`;
+}
+
+async function publicInvoiceByToken(token: unknown, allowDraft: boolean) {
+  const t = str(token, 64);
+  if (!/^[A-Za-z0-9_-]{16,64}$/.test(t)) fail("That invoice link isn't valid.", 404);
+  const invoice = await one<InvoiceRow>(`${INVOICE_SELECT} where i.public_token = $1`, [t]);
+  if (!invoice || (invoice.status === "draft" && !allowDraft)) fail("That invoice link isn't valid.", 404);
+  return invoice;
+}
+
+async function getPublicInvoice(request: Request, data: Row) {
+  const owner = Boolean(sessionEmail(request));
+  let invoice = await publicInvoiceByToken(data.token, owner);
+  const sessionId = str(data.sessionId, 200);
+  if (sessionId && invoice.balance_cents > 0 && (await syncStripeSession(invoice, sessionId))) {
+    invoice = await publicInvoiceByToken(data.token, owner);
+  }
+  const items = await q(
+    "select description, details, quantity, unit_cents from invoice_items where invoice_id = $1 order by position, id",
+    [invoice.id],
+  );
+  const payments = await q(
+    `select amount_cents, paid_on, method from payments
+     where invoice_id = $1 and status = 'paid' order by paid_on, id`,
+    [invoice.id],
+  );
+  const full = invoice as InvoiceRow & Record<string, unknown>;
+  return {
+    invoice: {
+      number: full.number,
+      state: full.state,
+      issued_on: full.issued_on,
+      due_on: full.due_on,
+      notes: full.notes,
+      client_name: full.client_name,
+      client_company: full.client_company,
+      client_email: full.client_email,
+      client_address: full.client_address,
+      client_website: full.client_website,
+      total_cents: full.total_cents,
+      paid_cents: full.paid_cents,
+      balance_cents: full.balance_cents,
+    },
+    items,
+    payments,
+    cardPayments: Boolean(stripeKey()),
+    preview: owner && invoice.status === "draft",
+  };
+}
+
+async function startCheckout(request: Request, data: Row) {
+  const invoice = await publicInvoiceByToken(data.token, false);
+  if (invoice.status === "void") fail("This invoice was cancelled.");
+  if (invoice.balance_cents <= 0) fail("This invoice is already paid.");
+  const origin = requestOrigin(request);
+  const back = `${origin}/invoice?t=${encodeURIComponent(invoice.public_token)}`;
+  const form: Record<string, string> = {
+    mode: "payment",
+    "line_items[0][quantity]": "1",
+    "line_items[0][price_data][currency]": "usd",
+    "line_items[0][price_data][unit_amount]": String(invoice.balance_cents),
+    "line_items[0][price_data][product_data][name]": `Wise Owl invoice ${invoice.number}`,
+    success_url: `${back}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: back,
+    "metadata[invoice_id]": String(invoice.id),
+    "payment_intent_data[description]": `Wise Owl invoice ${invoice.number}`,
+  };
+  if (invoice.client_email) form.customer_email = invoice.client_email;
+  const session = await stripe<StripeSession>("POST", "checkout/sessions", form);
+  await q("update invoices set stripe_session_id = $2 where id = $1", [invoice.id, session.id]);
+  if (!session.url) fail("The card payment page couldn't be opened.", 502);
+  return { url: session.url };
+}
+
 async function dashboard() {
+  await ensureCareInvoices();
   const [money, counts, monthly, dueTasks, recentPayments, openProjects, inbox] =
     await Promise.all([
       one(`
@@ -363,8 +688,16 @@ async function dashboard() {
   const today = await one<{ today: string; month: string }>(
     `select ${TODAY_SQL}::text as today, ${MONTH_SQL} as month`,
   );
+  const invoices = await one(`
+    select
+      coalesce(sum(balance_cents) filter (where state in ('sent', 'partial', 'overdue')), 0) as outstanding_cents,
+      coalesce(sum(balance_cents) filter (where state = 'overdue'), 0) as overdue_cents,
+      count(*) filter (where state = 'overdue') as overdue_count,
+      count(*) filter (where state = 'draft') as draft_count
+    from (${INVOICE_SELECT}) x`);
   return {
     ...today,
+    invoices,
     money,
     counts,
     monthly,
@@ -399,7 +732,7 @@ async function listClients() {
 async function getClient(clientId: number) {
   const client = await one("select * from clients where id = $1", [clientId]);
   if (!client) fail("That client is not in the book.", 404);
-  const [projects, payments, tasks, notes, carePlans, onboardings, agreements, expenses] =
+  const [projects, payments, tasks, notes, carePlans, onboardings, agreements, expenses, invoices] =
     await Promise.all([
       q(`${PROJECT_SELECT} where p.client_id = $1 order by p.created_at desc`, [clientId]),
       q(`${PAYMENT_SELECT} where pay.client_id = $1 order by pay.paid_on desc, pay.id desc`, [clientId]),
@@ -409,8 +742,9 @@ async function getClient(clientId: number) {
       q("select * from onboardings where client_id = $1 order by created_at desc", [clientId]),
       q("select * from agreements where client_id = $1 order by signed_at desc", [clientId]),
       q("select * from expenses where client_id = $1 order by spent_on desc", [clientId]),
+      q(`${INVOICE_SELECT} where i.client_id = $1 order by i.issued_on desc, i.id desc`, [clientId]),
     ]);
-  return { client, projects, payments, tasks, notes, carePlans, onboardings, agreements, expenses };
+  return { client, projects, payments, tasks, notes, carePlans, onboardings, agreements, expenses, invoices };
 }
 
 async function inbox() {
@@ -558,13 +892,21 @@ const privateActions: Record<string, Handler> = {
   deleteProject: (d) => remove("projects", id(d.id)),
 
   listPayments: () => q(`${PAYMENT_SELECT} order by pay.paid_on desc, pay.id desc limit 500`),
-  savePayment: (d) => {
+  savePayment: async (d) => {
     const kind = oneOf(d.kind, PAY_KIND, "project");
     let amount = cents(d.amount, "Amount", true);
     if (kind === "refund" && amount > 0) amount = -amount;
+    // A payment against an invoice belongs to that invoice's client and project.
+    const invoiceId = optId(d.invoiceId);
+    const invoice = invoiceId
+      ? await one<{ client_id: number; project_id: number | null }>(
+          "select client_id, project_id from invoices where id = $1", [invoiceId])
+      : null;
+    if (invoiceId && !invoice) fail("That invoice no longer exists.", 404);
     return save("payments", {
-      client_id: id(d.clientId, "client"),
-      project_id: optId(d.projectId),
+      invoice_id: invoiceId,
+      client_id: invoice?.client_id ?? id(d.clientId, "client"),
+      project_id: invoice ? invoice.project_id : optId(d.projectId),
       amount_cents: amount,
       kind,
       method: oneOf(d.method, PAY_METHOD, "card"),
@@ -574,6 +916,73 @@ const privateActions: Record<string, Handler> = {
     }, optId(d.id));
   },
   deletePayment: (d) => remove("payments", id(d.id)),
+
+  listInvoices: async () => {
+    await ensureCareInvoices();
+    return q(`${INVOICE_SELECT} order by i.issued_on desc, i.id desc limit 500`);
+  },
+  getInvoice: (d) => getInvoice(id(d.id)),
+  saveInvoice: async (d) => {
+    const items = invoiceItems(d.items);
+    const invoiceId = optId(d.id);
+    const issued = date(d.issuedOn) ?? (await todayIso());
+    const fields = {
+      client_id: id(d.clientId, "client"),
+      project_id: optId(d.projectId),
+      issued_on: issued,
+      due_on: date(d.dueOn),
+      notes: opt(d.notes, 2000),
+    };
+    return inTransaction(async (db) => {
+      if (invoiceId) {
+        const res = await db.query(
+          `update invoices set client_id = $2, project_id = $3, issued_on = $4, due_on = $5, notes = $6,
+             updated_at = now() where id = $1 returning id`,
+          [invoiceId, fields.client_id, fields.project_id, fields.issued_on, fields.due_on, fields.notes],
+        );
+        if (!res.rows[0]) fail("That invoice no longer exists.", 404);
+        await writeItems(db, invoiceId, items);
+        return { id: invoiceId };
+      }
+      return { id: await insertInvoice(db, fields, items) };
+    });
+  },
+  setInvoiceStatus: async (d) => {
+    const status = oneOf(d.status, ["draft", "sent", "void"] as const, "sent");
+    const row = await one(
+      `update invoices set status = $2::text,
+         sent_at = case when $2::text = 'sent' then coalesce(sent_at, now()) else sent_at end,
+         updated_at = now() where id = $1 returning id`,
+      [id(d.id), status],
+    );
+    if (!row) fail("That invoice no longer exists.", 404);
+    return row;
+  },
+  deleteInvoice: (d) => remove("invoices", id(d.id)),
+  invoiceFromProject: async (d) => {
+    const project = await one<{ id: number; client_id: number; name: string; price_cents: number; balance_cents: number }>(
+      `${PROJECT_SELECT} where p.id = $1`, [id(d.projectId, "project")],
+    );
+    if (!project) fail("That project no longer exists.", 404);
+    const partial = project.balance_cents > 0 && project.balance_cents < project.price_cents;
+    const amount = project.balance_cents > 0 ? project.balance_cents : project.price_cents;
+    const issued = await todayIso();
+    const newId = await inTransaction((db) =>
+      insertInvoice(db, {
+        client_id: project.client_id,
+        project_id: project.id,
+        issued_on: issued,
+        due_on: addDays(issued, 14),
+        notes: null,
+      }, [{
+        description: project.name,
+        details: partial ? "Remaining balance" : null,
+        quantity: 1,
+        unit_cents: amount,
+      }]),
+    );
+    return { id: newId };
+  },
 
   listTasks: () => q(`select * from (${TASK_SELECT}) x order by done, next_due nulls last,
     case priority when 'high' then 0 when 'normal' then 1 else 2 end, id`),
@@ -676,7 +1085,7 @@ const privateActions: Record<string, Handler> = {
 
   exportAll: async () => {
     const tables = ["clients", "projects", "payments", "care_plans", "tasks", "notes",
-      "expenses", "inquiries", "onboardings", "agreements"];
+      "expenses", "inquiries", "onboardings", "agreements", "invoices", "invoice_items"];
     const out: Record<string, unknown[]> = {};
     for (const table of tables) out[table] = await q(`select * from ${table} order by id`);
     return { exported_at: new Date().toISOString(), ...out };
@@ -812,6 +1221,10 @@ export async function POST(request: Request) {
         return json(await submitOnboarding(data));
       case "signAgreement":
         return json(await signAgreement(data));
+      case "publicInvoice":
+        return json(await getPublicInvoice(request, data));
+      case "payInvoice":
+        return json(await startCheckout(request, data));
     }
 
     const handler = privateActions[action];

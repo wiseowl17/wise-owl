@@ -1,7 +1,7 @@
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { studio } from "@/lib/studio-api";
-import { centsToInput, todayIso } from "@/lib/money";
+import { centsToInput, formatMoney, todayIso } from "@/lib/money";
 import {
   CARE_PLANS,
   CLIENT_STATUSES,
@@ -206,8 +206,20 @@ export function ProjectSheet({ open, onClose, onSaved, record, clientId }: Sheet
 
 /* -------------------------------------------------------------- payment */
 
-export function PaymentSheet({ open, onClose, onSaved, record, clientId, projectId }: SheetProps<Payment>) {
-  const lookups = useLookups(open);
+/** A payment against an invoice: the invoice fixes the client and project. */
+export type PaymentInvoice = { id: number; number: string; balance_cents: number; kind: string };
+
+export function PaymentSheet({
+  open,
+  onClose,
+  onSaved,
+  record,
+  clientId,
+  projectId,
+  invoice,
+}: SheetProps<Payment> & { invoice?: PaymentInvoice | null }) {
+  const lookups = useLookups(open && !invoice && !record?.invoice_id);
+  const invoiceId = invoice?.id ?? record?.invoice_id ?? null;
   const initialClient = String(record?.client_id ?? clientId ?? "");
   const [selectedClient, setSelectedClient] = useState(initialClient);
   useEffect(() => {
@@ -227,28 +239,38 @@ export function PaymentSheet({ open, onClose, onSaved, record, clientId, project
       onSubmit={(v) => run("savePayment", { ...v, id: record?.id }, record ? "Payment saved." : "Payment recorded.")}
       onDelete={record ? () => run("deletePayment", { id: record.id }, "Payment deleted.") : undefined}
     >
-      <SelectField
-        label="Client"
-        name="clientId"
-        required
-        placeholder="Choose a client"
-        value={selectedClient}
-        onChange={(e) => setSelectedClient(e.target.value)}
-        options={clientOptions(lookups.clients)}
-        className="sm:col-span-2"
-      />
-      <SelectField
-        key={`p-${selectedClient}`}
-        label="Project"
-        name="projectId"
-        placeholder="Not tied to a project"
-        defaultValue={record?.project_id ?? projectId ?? ""}
-        options={projectOptions(lookups.projects, selectedClient)}
-        className="sm:col-span-2"
-      />
-      <TextField label="Amount ($)" name="amount" type="number" step="0.01" inputMode="decimal" required autoFocus defaultValue={centsToInput(record ? Math.abs(record.amount_cents) : null)} />
+      {invoiceId ? (
+        <div className="rounded-[10px] bg-raised px-3 py-2.5 text-sm sm:col-span-2">
+          <input type="hidden" name="invoiceId" value={invoiceId} />
+          Toward invoice <b>{invoice?.number ?? `#${invoiceId}`}</b>
+          {invoice ? <span className="text-muted">, {formatMoney(invoice.balance_cents)} left to pay</span> : null}
+        </div>
+      ) : (
+        <>
+          <SelectField
+            label="Client"
+            name="clientId"
+            required
+            placeholder="Choose a client"
+            value={selectedClient}
+            onChange={(e) => setSelectedClient(e.target.value)}
+            options={clientOptions(lookups.clients)}
+            className="sm:col-span-2"
+          />
+          <SelectField
+            key={`p-${selectedClient}-${lookups.projects.length}`}
+            label="Project"
+            name="projectId"
+            placeholder="Not tied to a project"
+            defaultValue={record?.project_id ?? projectId ?? ""}
+            options={projectOptions(lookups.projects, selectedClient)}
+            className="sm:col-span-2"
+          />
+        </>
+      )}
+      <TextField label="Amount ($)" name="amount" type="number" step="0.01" inputMode="decimal" required autoFocus defaultValue={centsToInput(record ? Math.abs(record.amount_cents) : invoice ? invoice.balance_cents : null)} />
       <TextField label="Date" name="paidOn" type="date" required defaultValue={record?.paid_on ?? todayIso()} />
-      <SelectField label="For" name="kind" defaultValue={record?.kind ?? "project"} options={opts(PAYMENT_KINDS, paymentKindLabel)} />
+      <SelectField label="For" name="kind" defaultValue={record?.kind ?? invoice?.kind ?? "project"} options={opts(PAYMENT_KINDS, paymentKindLabel)} />
       <SelectField label="Method" name="method" defaultValue={record?.method ?? "card"} options={opts(PAYMENT_METHODS)} />
       <SelectField label="Status" name="status" defaultValue={record?.status ?? "paid"} options={opts(["paid", "pending"])} className="sm:col-span-2" />
       <AreaField label="Notes" name="notes" rows={2} defaultValue={record?.notes} className="sm:col-span-2" />
@@ -292,7 +314,7 @@ export function TaskSheet({ open, onClose, onSaved, record, clientId, projectId 
         options={clientOptions(lookups.clients)}
       />
       <SelectField
-        key={`p-${selectedClient}`}
+        key={`p-${selectedClient}-${lookups.projects.length}`}
         label="Project"
         name="projectId"
         placeholder="No project"

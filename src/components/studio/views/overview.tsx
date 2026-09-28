@@ -37,6 +37,20 @@ export function OverviewView() {
 
       <ImportBanner onDone={reload} />
 
+      {data && data.invoices.draft_count > 0 ? (
+        <Link
+          to="/studio"
+          search={{ view: "invoices" }}
+          className="flex items-center justify-between gap-3 rounded-[14px] border border-accent/30 bg-accent/5 px-4 py-3 text-sm transition-colors hover:bg-accent/10"
+        >
+          <span>
+            {data.invoices.draft_count} draft invoice{data.invoices.draft_count === 1 ? "" : "s"} ready to send
+            (monthly care drafts itself on each plan’s billing day).
+          </span>
+          <span className="shrink-0 font-medium text-accent">Review</span>
+        </Link>
+      ) : null}
+
       {!data ? (
         <LoadState error={error} rows={6} />
       ) : (
@@ -52,8 +66,13 @@ export function OverviewView() {
             <Stat label="Care plans / mo" value={formatMoney(data.money.mrr_cents)} />
             <Stat label="Owed on projects" value={formatMoney(data.money.outstanding_cents)} />
             <Stat
-              label="Pending payments"
-              value={formatMoney(data.money.pending_cents)}
+              label="Invoices unpaid"
+              value={formatMoney(data.invoices.outstanding_cents)}
+              hint={
+                data.invoices.overdue_count
+                  ? `${formatMoney(data.invoices.overdue_cents)} overdue`
+                  : undefined
+              }
             />
           </Panel>
 

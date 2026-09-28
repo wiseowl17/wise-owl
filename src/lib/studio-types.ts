@@ -118,6 +118,7 @@ export type Project = {
 
 export type Payment = {
   id: number;
+  invoice_id: number | null;
   client_id: number;
   client_name: string;
   client_company: string | null;
@@ -224,11 +225,18 @@ export type ClientDetail = {
   onboardings: Onboarding[];
   agreements: Agreement[];
   expenses: Expense[];
+  invoices: Invoice[];
 };
 
 export type Dashboard = {
   today: string;
   month: string;
+  invoices: {
+    outstanding_cents: number;
+    overdue_cents: number;
+    overdue_count: number;
+    draft_count: number;
+  };
   money: {
     month_cents: number;
     year_cents: number;
@@ -254,4 +262,78 @@ export type Inbox = {
   inquiries: Inquiry[];
   onboardings: Onboarding[];
   agreements: Agreement[];
+};
+
+export type InvoiceState = "draft" | "sent" | "partial" | "overdue" | "paid" | "void";
+
+export const INVOICE_STATE_LABELS: Record<InvoiceState, string> = {
+  draft: "Draft",
+  sent: "Sent",
+  partial: "Partly paid",
+  overdue: "Overdue",
+  paid: "Paid",
+  void: "Void",
+};
+
+export type Invoice = {
+  id: number;
+  number: string;
+  client_id: number;
+  client_name: string;
+  client_company: string | null;
+  client_email: string | null;
+  client_address: string | null;
+  client_website: string | null;
+  project_id: number | null;
+  project_name: string | null;
+  care_plan_id: number | null;
+  period: string | null;
+  status: "draft" | "sent" | "void";
+  state: InvoiceState;
+  issued_on: string;
+  due_on: string | null;
+  notes: string | null;
+  public_token: string;
+  sent_at: string | null;
+  total_cents: number;
+  paid_cents: number;
+  balance_cents: number;
+};
+
+export type InvoiceItem = {
+  id?: number;
+  description: string;
+  details: string | null;
+  quantity: number | string;
+  unit_cents: number;
+};
+
+export type InvoiceDetail = {
+  invoice: Invoice;
+  items: InvoiceItem[];
+  payments: Payment[];
+};
+
+/** What the client's invoice page receives: no internal ids. */
+export type PublicInvoice = {
+  invoice: Pick<
+    Invoice,
+    | "number"
+    | "state"
+    | "issued_on"
+    | "due_on"
+    | "notes"
+    | "client_name"
+    | "client_company"
+    | "client_email"
+    | "client_address"
+    | "client_website"
+    | "total_cents"
+    | "paid_cents"
+    | "balance_cents"
+  >;
+  items: InvoiceItem[];
+  payments: { amount_cents: number; paid_on: string; method: string }[];
+  cardPayments: boolean;
+  preview: boolean;
 };

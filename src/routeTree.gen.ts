@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InvoiceRouteImport } from './routes/invoice'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogoRouteImport } from './routes/logo'
 import { Route as OnboardRouteImport } from './routes/onboard'
@@ -20,6 +21,11 @@ import { Route as PWiseOwlRouteImport } from './routes/p/wise-owl'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoiceRoute = InvoiceRouteImport.update({
+  id: '/invoice',
+  path: '/invoice',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -55,6 +61,7 @@ const PWiseOwlRoute = PWiseOwlRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/invoice': typeof InvoiceRoute
   '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/invoice': typeof InvoiceRoute
   '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/invoice': typeof InvoiceRoute
   '/login': typeof LoginRoute
   '/logo': typeof LogoRoute
   '/onboard': typeof OnboardRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/invoice'
     | '/login'
     | '/logo'
     | '/onboard'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/invoice'
     | '/login'
     | '/logo'
     | '/onboard'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/invoice'
     | '/login'
     | '/logo'
     | '/onboard'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  InvoiceRoute: typeof InvoiceRoute
   LoginRoute: typeof LoginRoute
   LogoRoute: typeof LogoRoute
   OnboardRoute: typeof OnboardRoute
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoice': {
+      id: '/invoice'
+      path: '/invoice'
+      fullPath: '/invoice'
+      preLoaderRoute: typeof InvoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -177,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  InvoiceRoute: InvoiceRoute,
   LoginRoute: LoginRoute,
   LogoRoute: LogoRoute,
   OnboardRoute: OnboardRoute,

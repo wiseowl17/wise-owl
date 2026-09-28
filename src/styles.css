@@ -192,3 +192,33 @@
   margin: 0.55em 0 0;
   border-bottom-color: color-mix(in oklab, var(--color-accent-fg) 55%, transparent);
 }
+
+/* Invoices print as a single Letter page: only the document, no app chrome. */
+@media print {
+  @page {
+    size: Letter;
+    margin: 0.35in;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .invoice-doc,
+  .invoice-doc * {
+    visibility: visible;
+  }
+  .invoice-doc {
+    position: absolute;
+    inset: 0 0 auto 0;
+    box-shadow: none !important;
+    border: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .invoice-no-print {
+    display: none !important;
+  }
+}

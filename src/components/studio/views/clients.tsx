@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { type FormEvent, useMemo, useState } from "react";
 import { ArrowLeft, Mail, Phone, Plus, Globe, MapPin } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import {
   TaskSheet,
 } from "@/components/studio/forms";
 import { TaskRow } from "@/components/studio/views/tasks";
+import { InvoiceBadge, InvoiceSheet } from "@/components/studio/views/invoices";
 import {
   Badge,
   ConfirmButton,
@@ -169,11 +170,13 @@ type SheetState =
   | { kind: "payment"; record?: Payment; projectId?: number }
   | { kind: "task"; record?: Task; projectId?: number }
   | { kind: "care"; record?: CarePlan }
+  | { kind: "invoice" }
   | null;
 
 export function ClientDetailView({ id }: { id: number }) {
   const { value: data, error, reload } = useStudioData<ClientDetail>("getClient", { id });
   const [sheet, setSheet] = useState<SheetState>(null);
+  const navigate = useNavigate();
   const close = () => setSheet(null);
 
   if (!data) {
@@ -185,7 +188,7 @@ export function ClientDetailView({ id }: { id: number }) {
     );
   }
 
-  const { client, projects, payments, tasks, notes, carePlans, onboardings, agreements } = data;
+  const { client, projects, payments, tasks, notes, carePlans, onboardings, agreements, invoices } = data;
   const paid = payments.filter((p) => p.status === "paid").reduce((sum, p) => sum + p.amount_cents, 0);
   const pending = payments.filter((p) => p.status === "pending").reduce((sum, p) => sum + p.amount_cents, 0);
   const owed = projects
@@ -277,6 +280,15 @@ export function ClientDetailView({ id }: { id: number }) {
                     project={project}
                     onEdit={() => setSheet({ kind: "project", record: project })}
                     onPay={() => setSheet({ kind: "payment", projectId: project.id })}
+                    onInvoice={async () => {
+                      try {
+                        const { id: invoiceId } = await studio<{ id: number }>("invoiceFromProject", { projectId: project.id });
+                        toast.success("Draft invoice created from the project.");
+                        await navigate({ to: "/studio", search: { view: "invoices", id: invoiceId } });
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Could not create the invoice.");
+                      }
+                    }}
                   />
                 ))}
               </ul>
@@ -317,6 +329,42 @@ export function ClientDetailView({ id }: { id: number }) {
                         <span className="text-sm font-semibold tabular-nums">{formatMoney(payment.amount_cents)}</span>
                       </div>
                     </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel
+            title="Invoices"
+            action={
+              <Button size="sm" variant="ghost" onClick={() => setSheet({ kind: "invoice" })}>
+                <Plus className="size-4" /> Invoice
+              </Button>
+            }
+          >
+            {invoices.length === 0 ? (
+              <Empty>No invoices yet. Create one here or from a project above.</Empty>
+            ) : (
+              <ul className="divide-y divide-line">
+                {invoices.map((inv) => (
+                  <li key={inv.id}>
+                    <Link
+                      to="/studio"
+                      search={{ view: "invoices", id: inv.id }}
+                      className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-bg"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium tabular-nums">{inv.number}</p>
+                        <p className="truncate text-xs text-muted">
+                          {inv.care_plan_id ? "Monthly care" : inv.project_name ?? "Invoice"} · {formatDate(inv.issued_on)}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <InvoiceBadge state={inv.state} />
+                        <span className="text-sm font-semibold tabular-nums">{formatMoney(inv.total_cents)}</span>
+                      </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -458,6 +506,15 @@ export function ClientDetailView({ id }: { id: number }) {
         onClose={close}
         onSaved={reload}
       />
+      <InvoiceSheet
+        open={sheet?.kind === "invoice"}
+        clientId={client.id}
+        onClose={close}
+        onSaved={(newId) => {
+          reload();
+          if (newId) void navigate({ to: "/studio", search: { view: "invoices", id: newId } });
+        }}
+      />
       <CarePlanSheet
         open={sheet?.kind === "care"}
         record={sheet?.kind === "care" ? sheet.record : null}
@@ -495,10 +552,12 @@ function ProjectItem({
   project,
   onEdit,
   onPay,
+  onInvoice,
 }: {
   project: Project;
   onEdit: () => void;
   onPay: () => void;
+  onInvoice: () => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   const pct = project.price_cents ? Math.min(100, Math.round((project.paid_cents / project.price_cents) * 100)) : 0;
@@ -560,9 +619,14 @@ function ProjectItem({
               Edit project
             </Button>
             {project.balance_cents > 0 ? (
-              <Button size="sm" variant="outline" onClick={onPay}>
-                Record payment
-              </Button>
+              <>
+                <Button size="sm" variant="outline" onClick={() => void onInvoice()}>
+                  Create invoice
+                </Button>
+                <Button size="sm" variant="outline" onClick={onPay}>
+                  Record payment
+                </Button>
+              </>
             ) : null}
           </div>
         </div>

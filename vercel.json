@@ -11,6 +11,8 @@
     { "source": "/onboard/", "destination": "/onboard.html" },
     { "source": "/p/wise-owl", "destination": "/p/wise-owl/index.html" },
     { "source": "/p/wise-owl/", "destination": "/p/wise-owl/index.html" },
+    { "source": "/invoice", "destination": "/invoice.html" },
+    { "source": "/invoice/", "destination": "/invoice.html" },
     { "source": "/((?!api/|assets/|__grok/|.*\\..*).*)", "destination": "/index.html" }
   ],
   "headers": [

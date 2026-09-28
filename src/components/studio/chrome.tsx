@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import {
   CheckSquare,
   ExternalLink,
+  FileText,
   Folder,
   Inbox,
   LayoutDashboard,
@@ -21,6 +22,7 @@ export type StudioView =
   | "clients"
   | "projects"
   | "payments"
+  | "invoices"
   | "tasks"
   | "expenses"
   | "inbox";
@@ -29,6 +31,7 @@ const NAV: { view: StudioView; label: string; icon: typeof Users }[] = [
   { view: "overview", label: "Overview", icon: LayoutDashboard },
   { view: "clients", label: "Clients", icon: Users },
   { view: "projects", label: "Projects", icon: Folder },
+  { view: "invoices", label: "Invoices", icon: FileText },
   { view: "payments", label: "Payments", icon: Wallet },
   { view: "tasks", label: "Tasks", icon: CheckSquare },
   { view: "expenses", label: "Expenses", icon: Receipt },

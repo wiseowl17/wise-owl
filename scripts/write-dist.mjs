@@ -35,6 +35,7 @@ const routes = [
   ["/login", "login/index.html"],
   ["/studio", "studio/index.html"],
   ["/p/wise-owl", "p/wise-owl/index.html"],
+  ["/invoice", "invoice.html"],
 ];
 
 for (const [route, out] of routes) {

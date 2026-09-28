@@ -3,11 +3,12 @@ import { StudioGate } from "@/components/studio-gate";
 import { StudioChrome, type StudioView } from "@/components/studio/chrome";
 import { ClientDetailView, ClientsView } from "@/components/studio/views/clients";
 import { InboxView } from "@/components/studio/views/inbox";
+import { InvoiceDetailView, InvoicesView } from "@/components/studio/views/invoices";
 import { ExpensesView, PaymentsView, ProjectsView } from "@/components/studio/views/ledger";
 import { OverviewView } from "@/components/studio/views/overview";
 import { TasksView } from "@/components/studio/views/tasks";
 
-const VIEWS: StudioView[] = ["overview", "clients", "projects", "payments", "tasks", "expenses", "inbox"];
+const VIEWS: StudioView[] = ["overview", "clients", "projects", "invoices", "payments", "tasks", "expenses", "inbox"];
 
 type StudioSearch = { view?: StudioView; id?: number };
 
@@ -51,6 +52,8 @@ function StudioBody({ view, id }: { view: StudioView; id?: number }) {
       return id ? <ClientDetailView key={id} id={id} /> : <ClientsView />;
     case "projects":
       return <ProjectsView />;
+    case "invoices":
+      return id ? <InvoiceDetailView key={id} id={id} /> : <InvoicesView />;
     case "payments":
       return <PaymentsView />;
     case "tasks":
