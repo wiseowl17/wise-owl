@@ -4,7 +4,7 @@ export const BUSINESS = {
   line: "Web design",
   person: "Lorenzo Cruz",
   email: "mlcruz9804@gmail.com",
-  site: "wise-owl-mu.vercel.app",
+  site: "wiseowl17.vercel.app",
   payNoteCard:
     "Pay by card with the button below, or reply to this invoice for Zelle, Venmo, Cash App, check or bank transfer.",
   payNoteManual:
